@@ -84,6 +84,14 @@ const addBookHandler = (request, h) => {
 };
 
 const getAllBooksHandler = (request, h) => {
+  const { name, reading, finished } = request.query;
+
+  const dataOfBook = (book) => ({
+    id: book.id,
+    name: book.name,
+    publisher: book.publisher,
+  });
+
   // jika belum terdapat buku, maka array books kosong
   if (books.length === 0) {
     const response = h.response({
@@ -96,18 +104,27 @@ const getAllBooksHandler = (request, h) => {
     return response;
   }
 
-  // mapping a callback fucntion untuk return objek
-  // berupa id, name, publisher dari array books
-  const dataOfBook = books.map((book) => ({
-    id: book.id,
-    name: book.name,
-    publisher: book.publisher,
-  }));
+  let bookFilter = books;
+
+  if (name) {
+    bookFilter = books.filter((book) => book.name.toLowerCase().includes(name.toLowerCase()));
+  }
+
+  if (reading) {
+    bookFilter = books.filter((book) => Number(book.reading) === Number(reading));
+  }
+
+  // jika terdapat buku yang sudah selesai
+  if (finished) {
+    bookFilter = (book) => Number(book.finished) === Number(finished);
+  }
+
+  const bookList = bookFilter.map(dataOfBook);
 
   const response = h.response({
     status: 'success',
     data: {
-      books: dataOfBook,
+      books: bookList,
     },
   });
   response.code(200);

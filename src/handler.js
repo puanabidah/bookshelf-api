@@ -211,7 +211,6 @@ const deleteBookByIdHandler = (request, h) => {
   const { id } = request.params;
   const index = books.findIndex((book) => book.id === id);
 
-  // lakukan pengecekan thdp nilai index, pastikan nilainya tidak -1 bila hendak menghapus catatan
   if (index !== -1) {
     books.splice(index, 1);
     const response = h.response({
@@ -222,10 +221,9 @@ const deleteBookByIdHandler = (request, h) => {
     return response;
   }
 
-  // bila tdk ditemukan
   const response = h.response({
     status: 'fail',
-    messsage: ' Buku gagal dihapus. Id tidak ditemukan',
+    message: 'Buku gagal dihapus. Id tidak ditemukan',
   });
   response.code(404);
   return response;

@@ -84,6 +84,29 @@ const addBookHandler = (request, h) => {
 };
 
 const getAllBooksHandler = (request, h) => {
+  // request dari query
+  const { finished } = request.query;
+  // mapping a callback fucntion untuk return objek
+  // berupa id, name, publisher dari array books
+  const dataOfBook = (book) => ({
+    id: book.id,
+    name: book.name,
+    publisher: book.publisher,
+  });
+
+  // jika terdapat buku yang sudah selesai
+  if (finished) {
+    const check = (book) => (Number(book.finished) === finished);
+    const response = h.response({
+      status: 'success',
+      data: {
+        books: books.filter(check).map(dataOfBook),
+      },
+    });
+    response.code(200);
+    return response;
+  }
+
   // jika belum terdapat buku, maka array books kosong
   if (books.length === 0) {
     const response = h.response({
@@ -96,22 +119,40 @@ const getAllBooksHandler = (request, h) => {
     return response;
   }
 
-  // mapping a callback fucntion untuk return objek
-  // berupa id, name, publisher dari array books
-  const dataOfBook = books.map((book) => ({
-    id: book.id,
-    name: book.name,
-    publisher: book.publisher,
-  }));
-
+  // jika terdapat objek di array books maka tampilkan berikut
   const response = h.response({
     status: 'success',
     data: {
-      books: dataOfBook,
+      books: books.map(dataOfBook),
     },
   });
   response.code(200);
   return response;
 };
 
-module.exports = { addBookHandler, getAllBooksHandler };
+const getBookByIdHandler = (request, h) => {
+  const { id } = request.params;
+  // filter array books dengan id yang cocok dari client
+  const book = books.filter((n) => n.id === id)[0];
+
+  // jika elemen book tidak kosong maka
+  if (book !== undefined) {
+    const response = h.response({
+      status: 'success',
+      data: {
+        book,
+      },
+    });
+    response.code(200);
+    return response;
+  }
+
+  const response = h.response({
+    status: 'fail',
+    message: 'Buku tidak ditemukan',
+  });
+  response.code(404);
+  return response;
+};
+
+module.exports = { addBookHandler, getAllBooksHandler, getBookByIdHandler };

@@ -83,4 +83,35 @@ const addBookHandler = (request, h) => {
   return response;
 };
 
-module.exports = { addBookHandler };
+const getAllBooksHandler = (request, h) => {
+  // jika belum terdapat buku, maka array books kosong
+  if (books.length === 0) {
+    const response = h.response({
+      status: 'success',
+      data: {
+        books: [],
+      },
+    });
+    response.code(200);
+    return response;
+  }
+
+  // mapping a callback fucntion untuk return objek
+  // berupa id, name, publisher dari array books
+  const dataOfBook = books.map((book) => ({
+    id: book.id,
+    name: book.name,
+    publisher: book.publisher,
+  }));
+
+  const response = h.response({
+    status: 'success',
+    data: {
+      books: dataOfBook,
+    },
+  });
+  response.code(200);
+  return response;
+};
+
+module.exports = { addBookHandler, getAllBooksHandler };

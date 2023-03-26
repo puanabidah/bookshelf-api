@@ -2,7 +2,7 @@ const { nanoid } = require('nanoid');
 const books = require('./books');
 
 const addBookHandler = (request, h) => {
-  // yg ada di body request
+  // dapatkan data notes terbaru yang dikirimkan oleh client melalui body request.
   const {
     name,
     year,
@@ -85,27 +85,13 @@ const addBookHandler = (request, h) => {
 
 const getAllBooksHandler = (request, h) => {
   // request dari query
-  const { finished } = request.query;
-  // mapping a callback fucntion untuk return objek
-  // berupa id, name, publisher dari array books
+  const { name, reading, finished } = request.query;
+
   const dataOfBook = (book) => ({
     id: book.id,
     name: book.name,
     publisher: book.publisher,
   });
-
-  // jika terdapat buku yang sudah selesai
-  if (finished) {
-    const check = (book) => (Number(book.finished) === finished);
-    const response = h.response({
-      status: 'success',
-      data: {
-        books: books.filter(check).map(dataOfBook),
-      },
-    });
-    response.code(200);
-    return response;
-  }
 
   // jika belum terdapat buku, maka array books kosong
   if (books.length === 0) {
@@ -119,11 +105,28 @@ const getAllBooksHandler = (request, h) => {
     return response;
   }
 
+  let bookFilter = books;
+
+  if (name) {
+    bookFilter = books.filter((book) => book.name.toLowerCase().includes(name.toLowerCase()));
+  }
+
+  if (reading) {
+    bookFilter = books.filter((book) => Number(book.reading) === Number(reading));
+  }
+
+  // jika terdapat buku yang sudah selesai
+  if (finished) {
+    bookFilter = (book) => Number(book.finished) === Number(finished);
+  }
+
+  const bookList = bookFilter.map(dataOfBook);
+
   // jika terdapat objek di array books maka tampilkan berikut
   const response = h.response({
     status: 'success',
     data: {
-      books: books.map(dataOfBook),
+      books: bookList,
     },
   });
   response.code(200);
@@ -155,4 +158,102 @@ const getBookByIdHandler = (request, h) => {
   return response;
 };
 
-module.exports = { addBookHandler, getAllBooksHandler, getBookByIdHandler };
+const updateBookByIdHandler = (request, h) => {
+  // dapatkan data notes terbaru yang dikirimkan oleh client melalui body request.
+  const {
+    name,
+    year,
+    author,
+    summary,
+    publisher,
+    pageCount,
+    readPage,
+    reading,
+  } = request.payload;
+  const { id } = request.params;
+  // dapatkan nilai terbaru dari properti updatedAt
+  const updatedAt = new Date().toISOString();
+  // ubah catatan lama dengan data terbaru
+  // buat dengan indexing array
+  const index = books.findIndex((book) => book.id === id);
+
+  if (!name) {
+    const response = h.response({
+      status: 'fail',
+      message: 'Gagal memperbarui buku. Mohon isi nama buku',
+    });
+    response.code(400);
+    return response;
+  }
+
+  if (readPage > pageCount) {
+    const response = h.response({
+      status: 'fail',
+      message: 'Gagal memperbarui buku. readPage tidak boleh lebih besar dari pageCount',
+    });
+    response.code(400);
+    return response;
+  }
+
+  if (index === -1) {
+    const response = h.response({
+      status: 'fail',
+      message: 'Gagal memperbarui buku. Id tidak ditemukan',
+    });
+    response.code(404);
+    return response;
+  }
+
+  // berhasil ditemukan
+  books[index] = {
+    ...books[index],
+    name,
+    year,
+    author,
+    summary,
+    publisher,
+    pageCount,
+    readPage,
+    reading,
+    updatedAt,
+  };
+
+  const response = h.response({
+    status: 'success',
+    message: 'Buku berhasil diperbarui',
+  });
+  response.code(200);
+  return response;
+};
+
+const deleteBookByIdHandler = (request, h) => {
+  const { id } = request.params;
+  const index = books.findIndex((book) => book.id === id);
+
+  // lakukan pengecekan thdp nilai index, pastikan nilainya tidak -1 bila hendak menghapus catatan
+  if (index !== -1) {
+    books.splice(index, 1);
+    const response = h.response({
+      status: 'success',
+      message: 'Buku berhasil dihapus',
+    });
+    response.code(200);
+    return response;
+  }
+
+  // bila tdk ditemukan
+  const response = h.response({
+    status: 'fail',
+    messsage: ' Buku gagal dihapus. Id tidak ditemukan',
+  });
+  response.code(404);
+  return response;
+};
+
+module.exports = {
+  addBookHandler,
+  getAllBooksHandler,
+  getBookByIdHandler,
+  updateBookByIdHandler,
+  deleteBookByIdHandler,
+};

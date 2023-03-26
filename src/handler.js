@@ -19,27 +19,6 @@ const addBookHandler = (request, h) => {
   const updatedAt = insertedAt;
   const finished = (pageCount === readPage);
 
-  const newBook = {
-    name,
-    year,
-    author,
-    summary,
-    publisher,
-    pageCount,
-    readPage,
-    reading,
-    id,
-    insertedAt,
-    updatedAt,
-    finished,
-  };
-
-  // masukkan nilai-nilai tersebut ke dalam array books menggunakan method push()
-  books.push(newBook);
-
-  // menentukan apakah newBook sudah masuk ke dalam array Books? dengan menggunakan method filter
-  const isSuccess = books.filter((book) => book.id === id).length > 0;
-
   // Bila buku gagal dimasukkan
   // Client tidak melampirkan properti name pada request body
   if (!name) {
@@ -60,6 +39,27 @@ const addBookHandler = (request, h) => {
     response.code(400);
     return response;
   }
+
+  const newBook = {
+    name,
+    year,
+    author,
+    summary,
+    publisher,
+    pageCount,
+    readPage,
+    reading,
+    id,
+    insertedAt,
+    updatedAt,
+    finished,
+  };
+
+  // masukkan nilai-nilai tersebut ke dalam array books menggunakan method push()
+  books.push(newBook);
+
+  // menentukan apakah newBook sudah masuk ke dalam array Books? dengan menggunakan method filter
+  const isSuccess = books.filter((book) => book.id === id).length > 0;
 
   // Bila buku berhasil dimasukkan
   if (isSuccess) {
@@ -84,15 +84,6 @@ const addBookHandler = (request, h) => {
 };
 
 const getAllBooksHandler = (request, h) => {
-  // request dari query
-  const { name, reading, finished } = request.query;
-
-  const dataOfBook = (book) => ({
-    id: book.id,
-    name: book.name,
-    publisher: book.publisher,
-  });
-
   // jika belum terdapat buku, maka array books kosong
   if (books.length === 0) {
     const response = h.response({
@@ -105,28 +96,18 @@ const getAllBooksHandler = (request, h) => {
     return response;
   }
 
-  let bookFilter = books;
+  // mapping a callback fucntion untuk return objek
+  // berupa id, name, publisher dari array books
+  const dataOfBook = books.map((book) => ({
+    id: book.id,
+    name: book.name,
+    publisher: book.publisher,
+  }));
 
-  if (name) {
-    bookFilter = books.filter((book) => book.name.toLowerCase().includes(name.toLowerCase()));
-  }
-
-  if (reading) {
-    bookFilter = books.filter((book) => Number(book.reading) === Number(reading));
-  }
-
-  // jika terdapat buku yang sudah selesai
-  if (finished) {
-    bookFilter = (book) => Number(book.finished) === Number(finished);
-  }
-
-  const bookList = bookFilter.map(dataOfBook);
-
-  // jika terdapat objek di array books maka tampilkan berikut
   const response = h.response({
     status: 'success',
     data: {
-      books: bookList,
+      books: dataOfBook,
     },
   });
   response.code(200);
